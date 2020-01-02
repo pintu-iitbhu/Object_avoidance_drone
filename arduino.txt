@@ -1,0 +1,92 @@
+#include<Servo.h>
+Servo aileron, elevator;
+int setpoint = 60,CH1,CH2; //setpoint in cm
+float e1, e2, e3, e4;
+float op1, op2, op3, op4;
+float duration, distance, left, right, front, back, Kp = 10.5,opx,opy;
+void setup()
+{
+  Serial.begin(9600);
+  aileron.attach(12);
+  elevator.attach(13);
+  //aux.attach(A5);
+  
+
+  setpoint = constrain(setpoint, 0 , 100);
+  Serial.print("setpoint=");
+  Serial.print(setpoint);
+  Serial.println();
+
+  Serial.println("################################");
+  Serial.println("Welcome to Debugging console v2.0");
+  Serial.println("################################");
+  Serial.print("Initializing setup.");
+  for (int i = 0; i < 5; i++) {
+    Serial.print(".");
+    delay(100);
+  }
+  Serial.println();
+  Serial.println("######################################");
+
+}
+float dis(int trig, int echo) {
+  pinMode(trig, OUTPUT);
+  pinMode(echo, INPUT);
+  pinMode(3,OUTPUT);
+  pinMode(2,OUTPUT);
+//  digitalWrite(3,0);
+//  digitalWrite(2,0);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(1000);
+  digitalWrite(trig, LOW);
+  duration = pulseIn(echo, HIGH);
+  distance = (duration / 2) / 28.59;
+  distance = constrain(distance, 0, setpoint);
+  return (distance);
+}
+void loop()
+{
+  
+  CH1=1500;
+  CH2=1500;
+  left = dis(5, 4);
+  right = dis(7, 6);
+  front = dis(9, 8);
+  back = dis(11, 10);
+  int aux = pulseIn(0, HIGH, 250000);
+   Serial.println(aux);
+
+//    Serial.print("left="); Serial.print(left); Serial.print("||");
+//    Serial.print("right="); Serial.print(right); Serial.print("||");
+//    Serial.print("front="); Serial.print(front); Serial.print("||");
+//    Serial.print("back="); Serial.print(back); Serial.println();
+
+    e1 = left - setpoint;
+    e2 = right - setpoint;
+    e3 = front - setpoint;
+    e4 = back - setpoint;
+
+    op1 = e1 * Kp;
+    op2 = e2 * Kp;
+    op3 = e3 * Kp;
+    op4 = e4 * Kp;
+
+    opx = CH1 + op2 - op1;
+    opy = CH2 - op4 + op3;
+
+    if(opx!=CH1||opy!=CH2){
+      digitalWrite(2,1);digitalWrite(3,1);}
+    else{
+      digitalWrite(2,0);digitalWrite(3,0);}
+    
+
+      
+
+     // Serial.print("CH1="); Serial.print(opx); Serial.print("||");
+     // Serial.print("CH2="); Serial.print(opy); Serial.println();
+
+    aileron.writeMicroseconds(opx);
+    elevator.writeMicroseconds(opy);
+  
+
+}
